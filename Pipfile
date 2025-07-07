@@ -19,6 +19,7 @@ python-dotenv = "*"
 
 [dev-packages]
 ipykernel = "*"
+boto3-stubs = "==1.35.95"
 
 [requires]
 python_version = "3.11"
