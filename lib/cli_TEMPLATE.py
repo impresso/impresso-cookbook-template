@@ -69,6 +69,8 @@ Example:
 
 import logging
 import argparse
+import json
+import re
 import sys
 from smart_open import open as smart_open
 from typing import List, Optional
@@ -76,66 +78,11 @@ from typing import List, Optional
 from impresso_cookbook import (
     get_s3_client,
     get_timestamp,
-    read_json,
     setup_logging,
     get_transport_params,
 )
 
 log = logging.getLogger(__name__)
-
-
-class TemplateProcessor:
-    """
-    A template processor class that reads input lines and logs them.
-    """
-
-    def __init__(self, options: argparse.Namespace) -> None:
-        """
-        Initializes the TemplateProcessor with command-line options.
-
-        Args:
-            options (argparse.Namespace): Parsed command-line arguments.
-        """
-        self.options = options
-        self.log_level = options.log_level
-        self.log_file = options.log_file
-        # Configure the module-specific logger
-        setup_logging(self.log_level, self.log_file, logger=log)
-
-        # Initialize S3 client and timestamp
-        self.s3_client = get_s3_client()
-        self.timestamp = get_timestamp()
-
-    def process_line(self, line: str) -> None:
-        """
-        Processes a single line of input by logging it.
-
-        Args:
-            line (str): The input line to process.
-        """
-        log.info(f"Processing line: {line.strip()}")
-
-    def run(self) -> None:
-        """
-        Runs the template processor, reading from input files or stdin
-        and processing each line.
-        """
-        input_files: List[str] = (
-            self.options.input if self.options.input else ["/dev/stdin"]
-        )
-
-        for input_file in input_files:
-            try:
-                transport_params = get_transport_params(input_file)
-
-                with smart_open(
-                    input_file, "r", encoding="utf-8", transport_params=transport_params
-                ) as f:
-                    for line in f:
-                        self.process_line(line)
-            except Exception as e:
-                log.error(f"Error processing {input_file}: {e}")
-                sys.exit(1)
 
 
 def parse_arguments(args: Optional[List[str]] = None) -> argparse.Namespace:
@@ -164,11 +111,92 @@ def parse_arguments(args: Optional[List[str]] = None) -> argparse.Namespace:
         "-i",
         "--input",
         dest="input",
-        nargs="+",
-        help="Input files (default: stdin)",
-        default=None,
+        help="Input file (required)",
+        required=True,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        dest="output",
+        help="Output file (required)",
+        required=True,
     )
     return parser.parse_args(args)
+
+
+class TemplateProcessor:
+    """
+    A template processor class that reads input lines and logs them.
+    """
+
+    def __init__(self, options: argparse.Namespace) -> None:
+        """
+        Initializes the TemplateProcessor with command-line options.
+
+        Args:
+            options (argparse.Namespace): Parsed command-line arguments.
+        """
+        self.options = options
+        self.log_level = options.log_level
+        self.log_file = options.log_file
+        # Configure the module-specific logger
+        setup_logging(self.log_level, self.log_file, logger=log)
+
+        # Initialize S3 client and timestamp
+        self.s3_client = get_s3_client()
+        self.timestamp = get_timestamp()
+
+    def run(self) -> None:
+        """
+        Runs the template processor, reading from the input file
+        and processing each line.
+        """
+        input_file = self.options.input
+        output_file = self.options.output
+
+        try:
+
+            with smart_open(
+                input_file,
+                "r",
+                encoding="utf-8",
+                transport_params=get_transport_params(input_file),
+            ) as f, smart_open(
+                output_file,
+                "w",
+                encoding="utf-8",
+                transport_params=get_transport_params(input_file),
+            ) as output_stream:
+                for line in f:
+                    result = self.process_line(line)
+                    output_stream.write(json.dumps(result, ensure_ascii=False) + "\n")
+        except Exception as e:
+            log.error(f"Error processing file: {e}")
+            sys.exit(1)
+
+    def process_line(self, line: str) -> dict:
+        """
+        Processes a single line of JSON input data.
+
+        Args:
+            line (str): The input line to process.
+
+        Returns:
+            dict: The processed result.
+        """
+        data = json.loads(line.strip())
+        uid = data.get("id", data.get("c_id", ""))
+        fulltext = data.get("ft", "")
+        length = len(fulltext)
+        alphabetic_ratio = (
+            re.sub(r"\W+", "", fulltext).count(" ") / length if length > 0 else 0
+        )
+        return {
+            "id": uid,
+            "length": length,
+            "alphabetic_ratio": alphabetic_ratio,
+            "ts": self.timestamp,
+        }
 
 
 def main(args: Optional[List[str]] = None) -> None:
