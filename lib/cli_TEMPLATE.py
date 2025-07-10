@@ -129,16 +129,27 @@ class TemplateProcessor:
     A template processor class that reads input lines and logs them.
     """
 
-    def __init__(self, options: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        input_file: str,
+        output_file: str,
+        log_level: str = "INFO",
+        log_file: Optional[str] = None,
+    ) -> None:
         """
-        Initializes the TemplateProcessor with command-line options.
+        Initializes the TemplateProcessor with explicit parameters.
 
         Args:
-            options (argparse.Namespace): Parsed command-line arguments.
+            input_file (str): Path to the input file
+            output_file (str): Path to the output file
+            log_level (str): Logging level (default: "INFO")
+            log_file (Optional[str]): Path to log file (default: None)
         """
-        self.options = options
-        self.log_level = options.log_level
-        self.log_file = options.log_file
+        self.input_file = input_file
+        self.output_file = output_file
+        self.log_level = log_level
+        self.log_file = log_file
+
         # Configure the module-specific logger
         setup_logging(self.log_level, self.log_file, logger=log)
 
@@ -151,27 +162,23 @@ class TemplateProcessor:
         Runs the template processor, reading from the input file
         and processing each line.
         """
-        input_file = self.options.input
-        output_file = self.options.output
-
         try:
-
             with smart_open(
-                input_file,
+                self.input_file,
                 "r",
                 encoding="utf-8",
-                transport_params=get_transport_params(input_file),
+                transport_params=get_transport_params(self.input_file),
             ) as f, smart_open(
-                output_file,
+                self.output_file,
                 "w",
                 encoding="utf-8",
-                transport_params=get_transport_params(input_file),
+                transport_params=get_transport_params(self.output_file),
             ) as output_stream:
                 for line in f:
                     result = self.process_line(line)
                     output_stream.write(json.dumps(result, ensure_ascii=False) + "\n")
         except Exception as e:
-            log.error(f"Error processing file: {e}")
+            log.error(f"Error processing file: {e}", exc_info=True)
             sys.exit(1)
 
     def process_line(self, line: str) -> dict:
@@ -189,12 +196,12 @@ class TemplateProcessor:
         fulltext = data.get("ft", "")
         length = len(fulltext)
         alphabetic_ratio = (
-            re.sub(r"\W+", "", fulltext).count(" ") / length if length > 0 else 0
+            len(re.sub(r"\W+", "", fulltext)) / length if length > 0 else 0
         )
         return {
             "id": uid,
             "length": length,
-            "alphabetic_ratio": alphabetic_ratio,
+            "alphabetic_ratio": round(alphabetic_ratio, 3),
             "ts": self.timestamp,
         }
 
@@ -208,7 +215,12 @@ def main(args: Optional[List[str]] = None) -> None:
     """
     options: argparse.Namespace = parse_arguments(args)
 
-    processor: TemplateProcessor = TemplateProcessor(options)
+    processor: TemplateProcessor = TemplateProcessor(
+        input_file=options.input,
+        output_file=options.output,
+        log_level=options.log_level,
+        log_file=options.log_file,
+    )
 
     # Log the parsed options after logger is configured
     log.info("%s", options)
@@ -217,5 +229,8 @@ def main(args: Optional[List[str]] = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
-    sys.exit(0)
+    try:
+        main()
+    except Exception as e:
+        log.error(f"Processing error: {e}", exc_info=True)
+        sys.exit(2)
