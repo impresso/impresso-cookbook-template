@@ -25,3 +25,4 @@ config.local.mk
 *.egg-info/
 *.dist-info/
 *.whl
+.aws/*

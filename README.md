@@ -30,7 +30,7 @@ This template provides a complete framework for building newspaper processing pi
 ```
 ├── README.md                    # This file
 ├── Makefile                     # Main build configuration
-├── .env                         # Environment variables (create from dotenv.sample)
+├── .env                         # Environment variables (create manually from dotenv.sample)
 ├── dotenv.sample               # Sample environment configuration
 ├── Pipfile                     # Python dependencies
 ├── lib/
@@ -46,6 +46,12 @@ This template provides a complete framework for building newspaper processing pi
 ```
 
 ## Quick Start
+
+This template is meant to be used as a starting point for your own newspaper processing
+pipelines. It provides a Make-based build system that automates the setup and processing
+steps.
+It is meant to be used with github's template feature, so you can create a new repository
+from this template and start building your own processing pipelines.
 
 1. **Clone and set up the template:**
 
@@ -120,16 +126,6 @@ brew install make git-lfs parallel coreutils python3
    ```bash
    make setup
    ```
-
-### Verify Installation
-
-Test your setup with:
-
-```bash
-make test-aws                    # Test S3 connectivity
-make newspaper-list-target       # Generate newspaper list
-make help                        # Show available targets
-```
 
 ## Processing a Single Newspaper
 

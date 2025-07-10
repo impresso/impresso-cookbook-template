@@ -50,7 +50,9 @@ include cookbook/make_settings.mk
 # SETUP SETTINGS AND TARGETS
 include cookbook/setup.mk
 include cookbook/setup_python.mk
-# copy and adapt the setup_template.mk to your needs
+# for asw tool configuration if needed
+# include cookbook/setup_aws.mk
+# for TEMPLATE configuration, adapt to your needs
 include cookbook/setup_TEMPLATE.mk
 
 # Load newspaper list configuration and processing rules
