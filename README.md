@@ -50,7 +50,7 @@ This template provides a complete framework for building newspaper processing pi
 1. **Clone and set up the template:**
 
    ```bash
-   git clone <your-template-repo>
+   git clone --recursive <your-template-repo>
    cd impresso-cookbook-template
    cp dotenv.sample .env
    # Edit .env with your S3 credentials
