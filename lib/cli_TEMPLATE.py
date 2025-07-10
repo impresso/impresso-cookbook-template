@@ -80,7 +80,7 @@ from impresso_cookbook import (
     get_timestamp,
     setup_logging,
     get_transport_params,
-)
+)  # type: ignore
 
 log = logging.getLogger(__name__)
 
