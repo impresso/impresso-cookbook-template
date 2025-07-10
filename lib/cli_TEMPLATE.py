@@ -72,15 +72,15 @@ import argparse
 import json
 import re
 import sys
-from smart_open import open as smart_open
+from smart_open import open as smart_open  # type: ignore
 from typing import List, Optional
 
-from impresso_cookbook import (
+from impresso_cookbook import (  # type: ignore
     get_s3_client,
     get_timestamp,
     setup_logging,
     get_transport_params,
-)  # type: ignore
+)
 
 log = logging.getLogger(__name__)
 
