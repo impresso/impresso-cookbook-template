@@ -108,6 +108,18 @@ brew install make git git-lfs parallel coreutils python3
    make setup
    ```
 
+### 3. Adapt the Template to your new Processing Pipeline
+
+There is a special make target that will copy the template files to prepare your new
+processing pipeline.
+You need to decide on the cookbook acronym of your new pipeline. The following command
+will copy all files under cookbook to and replace TEMPLATE with your acronym.
+
+```bash
+export PROCESSING_ACRONYM=myimpressopipeline
+make -f cookobook/template-starter.mk
+```
+
 ### 3. Verify Installation
 
 Test your setup with a quick help command:
