@@ -7,10 +7,8 @@ This repository provides a template for creating new processing pipelines within
 - [Overview](#overview)
 - [Template Structure](#template-structure)
 - [Quick Start](#quick-start)
-- [Setup Instructions](#setup-instructions)
-- [Processing a Single Newspaper](#processing-a-single-newspaper)
-- [Template Usage](#template-usage)
 - [Configuration](#configuration)
+- [Processing a Single Newspaper](#processing-a-single-newspaper)
 - [Build System](#build-system)
 - [Contributing](#contributing)
 - [About Impresso](#about-impresso)
@@ -117,10 +115,10 @@ will copy all files under cookbook to and replace TEMPLATE with your acronym.
 
 ```bash
 export PROCESSING_ACRONYM=myimpressopipeline
-make -f cookobook/template-starter.mk
+make -f cookbook/template-starter.mk
 ```
 
-### 3. Verify Installation
+### 4. Verify Installation
 
 Test your setup with a quick help command:
 
@@ -130,7 +128,7 @@ make help
 
 You should see available targets and configuration options.
 
-### 4. Run a Test
+### 5. Run a Test
 
 Process a small newspaper to verify everything works:
 
@@ -139,7 +137,7 @@ Process a small newspaper to verify everything works:
 make newspaper NEWSPAPER=actionfem
 ```
 
-### 5. Explore Available Commands
+### 6. Explore Available Commands
 
 Once installation is verified, explore the build system:
 
