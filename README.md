@@ -28,88 +28,69 @@ This template provides a complete framework for building newspaper processing pi
 ## Template Structure
 
 ```
-├── README.md                    # This file
-├── Makefile                     # Main build configuration
-├── .env                         # Environment variables (create manually from dotenv.sample)
+├── README.md                   # This file
+├── Makefile                    # Main build configuration
+├── .env                        # Environment variables (create manually from dotenv.sample)
 ├── dotenv.sample               # Sample environment configuration
 ├── Pipfile                     # Python dependencies
 ├── lib/
 │   └── cli_TEMPLATE.py         # Template CLI script
 ├── cookbook/                   # Build system components
-│   ├── README.md              # Detailed cookbook documentation
-│   ├── setup_TEMPLATE.mk      # Template-specific setup
-│   ├── paths_TEMPLATE.mk      # Path definitions
-│   ├── sync_TEMPLATE.mk       # Data synchronization
-│   ├── processing_TEMPLATE.mk # Processing targets
-│   └── ...                    # Other cookbook components
-└── build.d/                   # Local build directory (auto-created)
+│   ├── README.md               # Detailed cookbook documentation
+│   ├── setup_TEMPLATE.mk       # Template-specific setup
+│   ├── paths_TEMPLATE.mk       # Path definitions
+│   ├── sync_TEMPLATE.mk        # Data synchronization
+│   ├── processing_TEMPLATE.mk  # Processing targets
+│   └── ...                     # Other cookbook components
+└── build.d/                    # Local build directory (auto-created)
 ```
 
 ## Quick Start
 
-This template is meant to be used as a starting point for your own newspaper processing
-pipelines. It provides a Make-based build system that automates the setup and processing
-steps.
-It is meant to be used with github's template feature, so you can create a new repository
-from this template and start building your own processing pipelines.
+Follow these steps to get started with the template:
 
-1. **Clone and set up the template:**
+### 1. Prerequisites
 
-   ```bash
-   git clone --recursive <your-template-repo>
-   cd impresso-cookbook-template
-   cp dotenv.sample .env
-   # Edit .env with your S3 credentials
-   ```
+Ensure you have the required system dependencies installed:
 
-2. **Install dependencies:**
+**Ubuntu/Debian:**
 
-   ```bash
-   make setup
-   ```
+```bash
+sudo apt-get update
+sudo apt-get install -y make git git-lfs parallel coreutils python3 python3-pip
+```
 
-3. **Process a single newspaper:**
-   ```bash
-   make newspaper NEWSPAPER=actionfem
-   ```
+**macOS:**
 
-## Setup Instructions
+```bash
+# Install Homebrew if not already installed
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-### Prerequisites
+# Install dependencies
+brew install make git git-lfs parallel coreutils python3
+```
+
+**System Requirements:**
 
 - Python 3.11+
 - Make (GNU Make recommended)
 - Git with git-lfs
 - AWS CLI (optional, for direct S3 access)
 
-### System Dependencies
+### 2. Clone and Setup
 
-**Ubuntu/Debian:**
+1. **Clone the repository:**
 
-```bash
-sudo apt-get install -y make git-lfs parallel coreutils python3 python3-pip
-```
+   ```bash
+   git clone --recursive <your-template-repo>
+   cd impresso-cookbook-template
+   ```
 
-**macOS:**
-
-```bash
-brew install make git-lfs parallel coreutils python3
-```
-
-### Environment Setup
-
-1. **Create environment file:**
+2. **Configure environment:**
 
    ```bash
    cp dotenv.sample .env
-   ```
-
-2. **Configure S3 credentials in `.env`:**
-
-   ```bash
-   SE_ACCESS_KEY=your_s3_access_key
-   SE_SECRET_KEY=your_s3_secret_key
-   SE_HOST_URL=https://os.zhdk.cloud.switch.ch/
+   # Edit .env with your S3 credentials (see Configuration section below)
    ```
 
 3. **Install Python dependencies:**
@@ -122,108 +103,60 @@ brew install make git-lfs parallel coreutils python3
    python3 -m pip install -r requirements.txt
    ```
 
-4. **Run initial setup:**
+4. **Initialize the environment:**
    ```bash
    make setup
    ```
 
-## Processing a Single Newspaper
+### 3. Verify Installation
 
-### Basic Processing
-
-Process a single newspaper with default settings:
+Test your setup with a quick help command:
 
 ```bash
-make newspaper NEWSPAPER=gazette-de-lausanne
+make help
 ```
 
-### Step-by-Step Processing
+You should see available targets and configuration options.
 
-You can also run individual steps:
+### 4. Run a Test
 
-1. **Sync input data:**
-
-   ```bash
-   make sync-input NEWSPAPER=gazette-de-lausanne
-   ```
-
-2. **Run processing:**
-
-   ```bash
-   make TEMPLATE-target NEWSPAPER=gazette-de-lausanne
-   ```
-
-3. **Sync output data:**
-   ```bash
-   make sync-output NEWSPAPER=gazette-de-lausanne
-   ```
-
-### Advanced Options
+Process a small newspaper to verify everything works:
 
 ```bash
-# Process with custom parallel settings
-make newspaper NEWSPAPER=journal-de-geneve PARALLEL_JOBS=4
-
-# Process with debug logging
-make newspaper NEWSPAPER=actionfem LOGGING_LEVEL=DEBUG
-
-# Process with dry-run (no S3 uploads)
-make newspaper NEWSPAPER=gazette-de-lausanne PROCESSING_S3_OUTPUT_DRY_RUN=--s3-output-dry-run
-
-# Process with custom build directory
-make newspaper NEWSPAPER=actionfem BUILD_DIR=custom-build
+# Test with a smaller newspaper first
+make newspaper NEWSPAPER=actionfem
 ```
 
-## Template Usage
+### 5. Explore Available Commands
 
-### Adapting the Template
+Once installation is verified, explore the build system:
 
-1. **Copy the template files:**
-
-   - `lib/cli_TEMPLATE.py` → `lib/cli_yourprocessing.py`
-   - `cookbook/setup_TEMPLATE.mk` → `cookbook/setup_yourprocessing.mk`
-   - `cookbook/paths_TEMPLATE.mk` → `cookbook/paths_yourprocessing.mk`
-   - `cookbook/sync_TEMPLATE.mk` → `cookbook/sync_yourprocessing.mk`
-   - `cookbook/processing_TEMPLATE.mk` → `cookbook/processing_yourprocessing.mk`
-
-2. **Update the Makefile:**
-   Replace `TEMPLATE` references with your processing name in [Makefile](Makefile)
-
-3. **Implement your processing logic:**
-   Modify the `TemplateProcessor` class in your CLI script to implement your specific processing requirements.
-
-### CLI Script Template
-
-The template CLI script ([lib/cli_TEMPLATE.py](lib/cli_TEMPLATE.py)) provides:
-
-- **Smart I/O**: Seamless handling of local files and S3 URIs
-- **Logging Integration**: Consistent logging with configurable levels
-- **S3 Integration**: Automatic S3 client configuration
-- **Error Handling**: Robust error handling with proper logging
-- **Argument Parsing**: Standard command-line interface patterns
-
-### Key Template Features
-
-- **Separation of Concerns**: Processing logic separated from CLI infrastructure
-- **Fail-Fast Principle**: Early configuration validation and error detection
-- **Unified I/O Model**: Same code handles local files and S3 objects
-- **Observability**: Comprehensive logging built-in
-- **Environment-Aware**: S3 credentials from environment variables
+```bash
+# Show all available targets
+make
+```
 
 ## Configuration
 
-### Environment Variables
+Before running any processing, configure your environment:
 
-Set these in your `.env` file:
+### Required Environment Variables
 
-- `SE_ACCESS_KEY`: S3 access key
-- `SE_SECRET_KEY`: S3 secret key
-- `SE_HOST_URL`: S3 endpoint URL
-- `LOGGING_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
+Edit your `.env` file with these required settings:
 
-### Processing Variables
+```bash
+# S3 Configuration (required)
+SE_ACCESS_KEY=your_s3_access_key
+SE_SECRET_KEY=your_s3_secret_key
+SE_HOST_URL=https://os.zhdk.cloud.switch.ch/
 
-Key configurable variables:
+# Logging Configuration (optional)
+LOGGING_LEVEL=INFO
+```
+
+### Optional Processing Variables
+
+These can be set in `.env` or passed as command arguments:
 
 - `NEWSPAPER`: Target newspaper to process
 - `BUILD_DIR`: Local build directory (default: `build.d`)
@@ -238,12 +171,40 @@ Configure S3 buckets in your paths file:
 - `S3_BUCKET_REBUILT`: Input data bucket (default: `22-rebuilt-final`)
 - `S3_BUCKET_TEMPLATE`: Output data bucket (default: `140-processed-data-sandbox`)
 
+## Processing a Single Newspaper
+
+### Basic Processing
+
+Process a single newspaper (all years) with default settings:
+
+```bash
+make newspaper NEWSPAPER=actionfem
+```
+
+### Step-by-Step Processing
+
+You can also run individual steps:
+
+1. **Sync data:**
+
+   ```bash
+   make sync NEWSPAPER=actionfem
+   ```
+
+2. **Run processing:**
+
+   ```bash
+   make processing-target NEWSPAPER=actionfem
+   ```
+
 ## Build System
 
 ### Core Targets
 
-- `make help`: Show available targets
-- `make setup`: Initialize environment
+After installation, these are the main commands you'll use:
+
+- `make help`: Show available targets and current configuration
+- `make setup`: Initialize environment (run once after installation)
 - `make newspaper`: Process single newspaper
 - `make collection`: Process multiple newspapers in parallel
 - `make all`: Complete processing pipeline with data sync
@@ -252,7 +213,7 @@ Configure S3 buckets in your paths file:
 
 - `make sync`: Sync input and output data
 - `make sync-input`: Download input data from S3
-- `make sync-output`: Upload results to S3
+- `make sync-output`: Upload results to S3 (will never overwrite existing data)
 - `make clean-build`: Remove build directory
 
 ### Parallel Processing
