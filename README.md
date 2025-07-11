@@ -8,7 +8,8 @@ This repository provides a template for creating new processing pipelines within
 - [Template Structure](#template-structure)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [Processing a Single Newspaper](#processing-a-single-newspaper)
+- [Running the Template](#running-the-template)
+- [Adapting to Your Processing Pipeline](#adapting-to-your-processing-pipeline)
 - [Build System](#build-system)
 - [Contributing](#contributing)
 - [About Impresso](#about-impresso)
@@ -106,19 +107,7 @@ brew install make git git-lfs parallel coreutils python3
    make setup
    ```
 
-### 3. Adapt the Template to your new Processing Pipeline
-
-There is a special make target that will copy the template files to prepare your new
-processing pipeline.
-You need to decide on the cookbook acronym of your new pipeline. The following command
-will copy all files under cookbook to and replace TEMPLATE with your acronym.
-
-```bash
-export PROCESSING_ACRONYM=myimpressopipeline
-make -f cookbook/template-starter.mk
-```
-
-### 4. Verify Installation
+### 3. Verify Installation
 
 Test your setup with a quick help command:
 
@@ -127,24 +116,6 @@ make help
 ```
 
 You should see available targets and configuration options.
-
-### 5. Run a Test
-
-Process a small newspaper to verify everything works:
-
-```bash
-# Test with a smaller newspaper first
-make newspaper NEWSPAPER=actionfem
-```
-
-### 6. Explore Available Commands
-
-Once installation is verified, explore the build system:
-
-```bash
-# Show all available targets
-make
-```
 
 ## Configuration
 
@@ -181,19 +152,26 @@ Configure S3 buckets in your paths file:
 - `S3_BUCKET_REBUILT`: Input data bucket (default: `22-rebuilt-final`)
 - `S3_BUCKET_TEMPLATE`: Output data bucket (default: `140-processed-data-sandbox`)
 
-## Processing a Single Newspaper
+## Running the Template
 
-### Basic Processing
+### Test the Template Processing
 
-Process a single newspaper (all years) with default settings:
+Process a small newspaper to verify everything works:
+
+```bash
+# Test with a smaller newspaper first
+make newspaper NEWSPAPER=actionfem
+```
+
+### Processing Options
+
+**Process a single newspaper (all years):**
 
 ```bash
 make newspaper NEWSPAPER=actionfem
 ```
 
-### Step-by-Step Processing
-
-You can also run individual steps:
+**Step-by-step processing:**
 
 1. **Sync data:**
 
@@ -202,16 +180,79 @@ You can also run individual steps:
    ```
 
 2. **Run processing:**
-
    ```bash
    make processing-target NEWSPAPER=actionfem
    ```
 
+**Process multiple newspapers:**
+
+```bash
+make collection COLLECTION_JOBS=4
+```
+
+### Available Commands
+
+Explore the build system:
+
+```bash
+# Show all available targets
+make help
+
+# Show current configuration
+make config
+```
+
+## Adapting to Your Processing Pipeline
+
+Once you've verified the template works, adapt it to your specific processing needs:
+
+### 1. Choose Your Processing Acronym
+
+Decide on a short acronym for your new pipeline (e.g., `myimpressopipeline`):
+
+```bash
+export PROCESSING_ACRONYM=myimpressopipeline
+make -f cookbook/template-starter.mk
+```
+
+This will create adapted files with your acronym:
+
+```
+├── README.md                   # This file
+├── Makefile.myimpressopipeline # Main build configuration adapted for myimpressopipeline
+├── .env                        # Environment variables (create manually from dotenv.sample)
+├── dotenv.sample               # Sample environment configuration
+├── Pipfile                     # Python dependencies
+├── lib/
+│   └── cli_myimpressopipeline.py         # Template CLI script adapted for myimpressopipeline
+├── cookbook/                   # Build system components
+│   ├── README.md               # Detailed cookbook documentation
+│   ├── setup_myimpressopipeline.mk       # myimpressopipeline-specific setup
+│   ├── paths_myimpressopipeline.mk       # Path definitions
+│   ├── sync_myimpressopipeline.mk        # Data synchronization
+│   ├── processing_myimpressopipeline.mk  # Processing targets
+│   └── ...                     # Other cookbook components
+└── build.d/                    # Local build directory (auto-created)
+```
+
+### 2. Customize Your Processing Logic
+
+After adaptation, customize these key files:
+
+- **`lib/cli_myimpressopipeline.py`**: Implement your processing logic
+- **`cookbook/processing_myimpressopipeline.mk`**: Define your processing targets
+- **`cookbook/paths_myimpressopipeline.mk`**: Configure input/output paths and S3 buckets
+
+### 3. Test Your Adapted Pipeline
+
+```bash
+# Use your new Makefile
+make -f Makefile.myimpressopipeline newspaper NEWSPAPER=actionfem
+```
+
 ## Build System
 
 ### Core Targets
-
-After installation, these are the main commands you'll use:
 
 - `make help`: Show available targets and current configuration
 - `make setup`: Initialize environment (run once after installation)
