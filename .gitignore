@@ -26,3 +26,7 @@ config.local.mk
 *.dist-info/
 *.whl
 .aws/*
+cookbook/*_myprocessing.mk
+cookbook/lib/*_myprocessing.py
+Makefile.myprocessing
+.DS_Store
