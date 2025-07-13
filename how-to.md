@@ -219,22 +219,24 @@ List any additional Python packages or system tools your processing will need.
 
 ### Step 6.1: Generate Adapted Files
 
-Replace `YOUR_ACRONYM` with your chosen acronym:
+Replace `PROCESSING_ACRONYM` with your chosen acronym (here we use `myprocessing` as an example):
 
 ```bash
-export PROCESSING_ACRONYM=YOUR_ACRONYM
+export PROCESSING_ACRONYM=myprocessing
 make -f cookbook/template-starter.mk
 ```
 
 This creates:
 
-- `Makefile.YOUR_ACRONYM`
-- `lib/cli_YOUR_ACRONYM.py`
-- `cookbook/*_YOUR_ACRONYM.mk` files
+- `Makefile.myprocessing`
+- `lib/cli_myprocessing.py`
+- `cookbook/*_myprocessing.mk` files
 
 ### Step 6.2: Update Dependencies (if needed)
 
-If your processing requires additional packages:
+If your processing requires additional packages, add them to the `Pipfile`:
+In the following and for concreteness, I will use a concrete example of adding a newsagency linking cookbook
+recipe that uses the `impresso-pipelines` package with the `newsagencies` extra.
 
 1. **Add to Pipfile:**
 
@@ -261,15 +263,15 @@ If your processing requires additional packages:
 
 ```bash
 # Test with your new Makefile
-make -f Makefile.YOUR_ACRONYM help
-mv Makefile.YOUR_ACRONYM Makefile
+make -f Makefile.myprocessing help
+mv Makefile.myprocessing Makefile # let's now switch to the new Makefile for our processing pipeline.
 ```
 
 ## 7. Implementing Your Processing Logic
 
 ### Step 7.1: Understand the CLI Template
 
-Open `lib/cli_YOUR_ACRONYM.py` and examine the structure:
+Open `lib/cli_myprocessing.py` and examine the structure:
 
 For impresso cookbook pipelines, the CLI script typically includes:
 
@@ -280,23 +282,65 @@ For impresso cookbook pipelines, the CLI script typically includes:
   files using a Processor class.
 - Error handling to log failures during processing
 
-## 8. Configuring Data Paths and S3
+### Step 7.2: Implement Your Processing Logic
+
+Make sure to build a `Processor` class that encapsulates your processing logic. This
+class should:
+
+- Define methods for processing input lines
+- Handle input/output file operations
+- Implement any specific processing algorithms or logic required for your task
+- Use `smart_open` for file I/O to support both local and S3 files
+- Include logging for debugging and monitoring
+
+Test your skipt quickly by running it with code that just tests the core functionality:
+
+```bash
+python lib/cli_myprocessing.py -i s3://22-rebuilt-final/oerennes/oerennes-1942.jsonl.bz2  -o orennes1942.jsonl --log-level INFO --log-file out.log
+```
+
+## Step 7.3. Configuring Data Paths and S3
+
+Next we need to configure the input and output paths for your processing pipeline. This
+includes setting up S3 buckets and local directories.
+
+Edit the `cookbook/paths_myprocessing.mk` file to define your input and output paths on
+s3 (which also includes the sandbox bucket names) and local directories.
+
+```makefile
+
+# Input data bucket (where you write and read data from)
+# USER-VARIABLE: S3_BUCKET_myprocessing
+S3_BUCKET_myprocessing := 140-processed-data-sandbox
+
+# USER-VARIABLE: PROCESS_LABEL_myprocessing
+PROCESS_LABEL_myprocessing ?= newsagencies
+
+# USER-VARIABLE: TASK_myprocessing
+TASK_myprocessing ?= nel
+
+# USER-VARIABLE: MODEL_ID_myprocessing
+# The model identifier
+#
+# Specifies the model used for myprocessing processing.
+MODEL_ID_myprocessing ?= bert-base-historic-multilingual
+  $(call log.debug, MODEL_ID_myprocessing)
+
+
+# USER-VARIABLE: RUN_VERSION_myprocessing
+# The version of the processing run
+#
+# Indicates the version of the current processing run.
+RUN_VERSION_myprocessing ?= v1-0-0
+  $(call log.debug, RUN_VERSION_myprocessing)
+```
+
+Then adapt the `cookbook/sync_myprocessing.mk` file to synchronize data between your
+local environment and S3 buckets. This should specifically define a `sync-myprocessing` target that will copy data from the S3 input bucket to your local build directory.
 
 ### Step 8.1: Configure Input/Output Buckets
 
-Edit `cookbook/paths_YOUR_ACRONYM.mk`:
-
-```makefile
-# Input data bucket (where you read source data from)
-S3_BUCKET_INPUT := 22-rebuilt-final
-
-# Output data bucket (where you save results)
-S3_BUCKET_OUTPUT := YOUR-PROCESSING-BUCKET
-
-# Processing paths
-S3_INPUT_PREFIX := text-reuse/
-S3_OUTPUT_PREFIX := YOUR_ACRONYM/
-```
+Edit `cookbook/paths_myprocessing.mk`:
 
 ### Step 8.2: Configure Local Paths
 
@@ -354,10 +398,10 @@ make newspaper NEWSPAPER=actionfem YEARS="1975 1976"
 
 ```bash
 # Process entire collection
-make -f Makefile.YOUR_ACRONYM collection COLLECTION_JOBS=4
+make collection COLLECTION_JOBS=4
 
 # Process with custom parallelization
-make -f Makefile.YOUR_ACRONYM collection COLLECTION_JOBS=4 MAX_LOAD=8
+make collection COLLECTION_JOBS=4 MAX_LOAD=8
 ```
 
 ### Step 10.4: Performance Optimization
@@ -379,8 +423,8 @@ time make  newspaper NEWSPAPER=actionfem
 **Issue: "No such file or directory" errors**
 
 - Check S3 credentials in `.env`
-- Verify bucket names in `paths_YOUR_ACRONYM.mk`
-- Ensure input data exists: `make -f Makefile.YOUR_ACRONYM config`
+- Verify bucket names in `paths_myprocessing.mk`
+- Ensure input data exists: `make config`
 
 **Issue: Python import errors**
 
@@ -392,12 +436,12 @@ time make  newspaper NEWSPAPER=actionfem
 
 - Enable debug logging: `export LOGGING_LEVEL=DEBUG`
 - Check stamp files: `ls -la build.d/stamps/`
-- Manually test CLI: `python lib/cli_YOUR_ACRONYM.py --help`
+- Manually test CLI: `python lib/cli_myprocessing.py --help`
 
 **Issue: S3 sync problems**
 
 - Test S3 connection: `aws s3 ls s3://your-bucket/ --endpoint-url=$SE_HOST_URL`
-- Check credentials: `make -f Makefile.YOUR_ACRONYM config`
+- Check credentials: `make config`
 - Verify bucket permissions
 
 ### Getting Help
