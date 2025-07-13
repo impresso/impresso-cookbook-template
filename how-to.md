@@ -264,6 +264,7 @@ recipe that uses the `impresso-pipelines` package with the `newsagencies` extra.
 ```bash
 # Test with your new Makefile
 make -f Makefile.myprocessing help
+mv Makefile Makefile.TEMPLATE # let's now switch to the new Makefile for our processing pipeline.
 mv Makefile.myprocessing Makefile # let's now switch to the new Makefile for our processing pipeline.
 ```
 
@@ -378,16 +379,10 @@ make newspaper NEWSPAPER=actionfem
 
 ### Step 9.3: Validate Output
 
-```bash
-# Check generated output files
-ls -la build.d/output/actionfem/
-```
-
-### Step 9.4: Test Multiple Years
+### Step 9.4: Test Multiple newspapers
 
 ```bash
-# Process specific years
-make newspaper NEWSPAPER=actionfem YEARS="1975 1976"
+make collection COLLECTION_JOBS=4
 ```
 
 ## 10. Deployment and Production
@@ -412,8 +407,7 @@ Monitor and optimize:
 # Monitor resource usage
 htop
 
-# Check processing speed
-time make  newspaper NEWSPAPER=actionfem
+nvidia-smi  # For GPU monitoring
 ```
 
 ## 11. Troubleshooting
@@ -435,13 +429,12 @@ time make  newspaper NEWSPAPER=actionfem
 **Issue: Processing fails silently**
 
 - Enable debug logging: `export LOGGING_LEVEL=DEBUG`
-- Check stamp files: `ls -la build.d/stamps/`
+- Check stamp files:
 - Manually test CLI: `python lib/cli_myprocessing.py --help`
 
 **Issue: S3 sync problems**
 
-- Test S3 connection: `aws s3 ls s3://your-bucket/ --endpoint-url=$SE_HOST_URL`
-- Check credentials: `make config`
+- Test S3 connection: `make check-s3-credentials`
 - Verify bucket permissions
 
 ### Getting Help
