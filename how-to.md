@@ -51,6 +51,14 @@ Gather the following information before proceeding:
 
 ### Step 2.1: Create Your New Repository
 
+It is best to already think about your processing task and choose a short acronym (3-15
+characters) that describes it. This will be used to create your new repository.
+
+Select a short, descriptive acronym for your pipeline (3-15 characters):
+
+- Good examples: `ocr`, `ner`, `classification`, `sentiment`
+- Avoid spaces, special characters, or very long names
+
 **Option A: Using GitHub CLI (Fastest)**
 
 ```bash
@@ -189,7 +197,7 @@ make newspaper NEWSPAPER=actionfem
 
 ```bash
 # Test S3 sync (should list available newspapers)
-make config
+make check-s3-credentials
 ```
 
 ## 5. Planning Your Adaptation
@@ -202,13 +210,6 @@ Answer these questions:
 2. **What are your inputs?** (newspaper articles, specific file formats, etc.)
 3. **What are your outputs?** (processed files, metadata, statistics)
 4. **What processing steps are required?** (preprocessing, main processing, post-processing)
-
-### Step 5.2: Choose Your Pipeline Acronym
-
-Select a short, descriptive acronym for your pipeline (3-15 characters):
-
-- Good examples: `ocr`, `ner`, `classification`, `sentiment`
-- Avoid spaces, special characters, or very long names
 
 ### Step 5.3: Identify Required Dependencies
 
@@ -240,20 +241,28 @@ If your processing requires additional packages:
    ```toml
    [packages]
    # ...existing packages...
-   your-new-package = "*"
-   another-package = ">=1.0.0"
+   impresso-pipelines = {extras=["newsagencies"]}
    ```
 
 2. **Install new dependencies:**
+
    ```bash
    pipenv install
    ```
 
-### Step 6.3: Verify Adaptation
+3. **Update the requirements.txt:**
+
+   ```bash
+   pipenv lock
+   pipenv requirements > requirements.txt
+   ```
+
+### Step 6.3: Verify Adaptation and Rename Makefile
 
 ```bash
 # Test with your new Makefile
 make -f Makefile.YOUR_ACRONYM help
+mv Makefile.YOUR_ACRONYM Makefile
 ```
 
 ## 7. Implementing Your Processing Logic
@@ -262,73 +271,14 @@ make -f Makefile.YOUR_ACRONYM help
 
 Open `lib/cli_YOUR_ACRONYM.py` and examine the structure:
 
-```python
-def process_newspaper_year(newspaper: str, year: int, input_dir: Path, output_dir: Path):
-    """Main processing function - customize this for your task"""
-    pass
-```
+For impresso cookbook pipelines, the CLI script typically includes:
 
-### Step 7.2: Implement Your Processing Function
-
-Replace the template function with your processing logic:
-
-```python
-def process_newspaper_year(newspaper: str, year: int, input_dir: Path, output_dir: Path):
-    """
-    Process all articles for a given newspaper and year.
-
-    Args:
-        newspaper: Newspaper identifier (e.g., 'actionfem')
-        year: Year to process (e.g., 1975)
-        input_dir: Path to input data
-        output_dir: Path where results should be saved
-    """
-    # Your processing implementation here
-    print(f"Processing {newspaper} for year {year}")
-
-    # Example: Process each article file
-    for article_file in input_dir.glob("*.json"):
-        # Load article data
-        with open(article_file, 'r') as f:
-            article_data = json.load(f)
-
-        # Your processing logic here
-        processed_data = your_processing_function(article_data)
-
-        # Save results
-        output_file = output_dir / f"processed_{article_file.name}"
-        with open(output_file, 'w') as f:
-            json.dump(processed_data, f, indent=2)
-```
-
-### Step 7.3: Add Error Handling and Logging
-
-```python
-import logging
-from pathlib import Path
-
-def process_newspaper_year(newspaper: str, year: int, input_dir: Path, output_dir: Path):
-    """Process newspaper year with proper error handling"""
-
-    # Setup logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-
-    try:
-        logger.info(f"Starting processing for {newspaper} {year}")
-
-        # Ensure output directory exists
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Your processing logic here
-        # ...
-
-        logger.info(f"Successfully processed {newspaper} {year}")
-
-    except Exception as e:
-        logger.error(f"Error processing {newspaper} {year}: {str(e)}")
-        raise
-```
+- Command-line argument parsing using `argparse`
+- Input/output file handling with `smart_open`
+- Logging setup using `impresso_cookbook.setup_logging`
+- Main processing function that reads input files, processes them, and writes output
+  files using a Processor class.
+- Error handling to log failures during processing
 
 ## 8. Configuring Data Paths and S3
 
@@ -371,7 +321,7 @@ OUTPUT_PATTERN := *.processed.json
 
 ```bash
 # Test your adapted pipeline
-make -f Makefile.YOUR_ACRONYM newspaper NEWSPAPER=actionfem
+make newspaper NEWSPAPER=actionfem
 ```
 
 ### Step 9.2: Debug Processing Issues
@@ -379,7 +329,7 @@ make -f Makefile.YOUR_ACRONYM newspaper NEWSPAPER=actionfem
 ```bash
 # Enable verbose logging
 export LOGGING_LEVEL=DEBUG
-make -f Makefile.YOUR_ACRONYM newspaper NEWSPAPER=actionfem
+make newspaper NEWSPAPER=actionfem
 ```
 
 ### Step 9.3: Validate Output
@@ -393,26 +343,12 @@ ls -la build.d/output/actionfem/
 
 ```bash
 # Process specific years
-make -f Makefile.YOUR_ACRONYM newspaper NEWSPAPER=actionfem YEARS="1975 1976"
+make newspaper NEWSPAPER=actionfem YEARS="1975 1976"
 ```
 
 ## 10. Deployment and Production
 
 ### Step 10.1: Production Configuration
-
-1. **Update `.env` for production:**
-
-   ```bash
-   # Production S3 settings
-   S3_BUCKET_OUTPUT=your-production-bucket
-   LOGGING_LEVEL=INFO
-   PARALLEL_JOBS=8
-   ```
-
-2. **Test production settings:**
-   ```bash
-   make -f Makefile.YOUR_ACRONYM config
-   ```
 
 ### Step 10.2: Large-Scale Processing
 
@@ -424,26 +360,6 @@ make -f Makefile.YOUR_ACRONYM collection COLLECTION_JOBS=4
 make -f Makefile.YOUR_ACRONYM collection COLLECTION_JOBS=4 MAX_LOAD=8
 ```
 
-### Step 10.3: Monitoring and Logging
-
-Set up proper logging for production:
-
-```python
-# In your cli_YOUR_ACRONYM.py
-import logging
-import sys
-
-# Configure logging for production
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('processing.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-```
-
 ### Step 10.4: Performance Optimization
 
 Monitor and optimize:
@@ -453,7 +369,7 @@ Monitor and optimize:
 htop
 
 # Check processing speed
-time make -f Makefile.YOUR_ACRONYM newspaper NEWSPAPER=actionfem
+time make  newspaper NEWSPAPER=actionfem
 ```
 
 ## 11. Troubleshooting
