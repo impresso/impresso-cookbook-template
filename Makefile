@@ -19,10 +19,14 @@ include cookbook/log.mk
 # to the repository! If you have stored config files in the repository set the
 # CONFIG_LOCAL_MAKE variable to a different name.
 CONFIG_LOCAL_MAKE ?= config.local.mk
-
+ifdef CFG
+  CONFIG_LOCAL_MAKE := $(CFG)
+  $(info Overriding CONFIG_LOCAL_MAKE to $(CONFIG_LOCAL_MAKE) from CFG variable)
+else
+  $(call log.info, CONFIG_LOCAL_MAKE)
+endif
 # Load local config if it exists (ignore silently if it does not exists)
 -include $(CONFIG_LOCAL_MAKE)
-
 
 # Report logging level after processing local configurations
   $(call log.info, LOGGING_LEVEL)
